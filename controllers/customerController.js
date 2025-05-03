@@ -21,7 +21,7 @@ const createCustomer = async (req, res) => {
     // Check the Customer exists before or not
     const isExistingCustomer = await Customer.findOne({ phone });
     if (isExistingCustomer) {
-      return res.status(400).json({ message: "Customer already exists" });
+      return res.status(409).json({ message: "Customer Already Exists With Same Phone Number" });
     }
     // Create a New Customer
 
@@ -34,7 +34,7 @@ const createCustomer = async (req, res) => {
     });
     // Save the Customer in DB
     await newCustomer.save();
-    return res.json({ message: "Customer Created Successfully" });
+    return res.status(201).json({ message: "Customer Created Successfully" });
   } catch (err) {
     return res.status(400).json({ message: err.message });
   }
@@ -59,11 +59,11 @@ const getCustomer = async (req, res) => {
     const { customerId } = req.params;
     const customer = await Customer.findById(customerId);
     if (!customer) {
-      return res.status(400).json({ message: "Customer Not Found" });
+      return res.status(404).json({ message: "Customer Not Found" });
     }
     // If customer exists and check whether it belongs to shopkeeper or not
     if (customer.userId != req.shopKeeper._id) {
-      return res.status(400).json({ message: "Customer Not Found" });
+      return res.status(404).json({ message: "Customer Not Found" });
     }
     return res.json({ data: customer });
   } catch (err) {
@@ -88,7 +88,7 @@ const updateCustomer = async (req, res) => {
     // Check the Customer exists before or not
     const existingCustomer = await Customer.findById(customerId);
     if (!existingCustomer) {
-      return res.status(400).json({ message: "Customer doesn't exist before" });
+      return res.status(404).json({ message: "Customer Not Found" });
     }
     // Update the Custome in DB
     Object.keys(req.body).forEach((field) => {
@@ -111,11 +111,11 @@ const removeCustomer = async (req, res) => {
     // Check customer exists before or not
     const existingCustomer = await Customer.findById(customerId);
     if (!existingCustomer) {
-      return res.status(400).json({ message: "Customer doesn't exist before" });
+      return res.status(404).json({ message: "Customer Not Found" });
     }
     // If Exists remove the customer
     await Customer.findByIdAndDelete(customerId);
-    return res.status(200).json({
+    return res.status(204).json({
       message: `${existingCustomer.name} has been successfully removed`,
     });
   } catch (err) {

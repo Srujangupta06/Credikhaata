@@ -89,8 +89,26 @@ const validateCustomerDetails = (customerInfo) => {
 //   }
 // };
 
+const validateLoanCreationDetails = (loanInfo)=>{
+  const { loanAmount,customerId, itemDescription,frequency } = loanInfo;
+  if(!loanAmount || !itemDescription || !customerId || !frequency){
+    throw new Error("All fields are required");
+  }
+  if(typeof loanAmount !== "number"){
+    throw new Error("Loan Amount must be a number");
+  }
+  if(loanAmount < 100){
+    throw new Error("Loan Amount must be at least 100");
+  }
+  if(typeof frequency !== "string" || frequency.trim() === ""){
+    throw new Error("Frequency must be a non-empty string");
+  }
+}
+
+
 module.exports = {
   validateSignUpDetails,
   validateLoginDetails,
   validateCustomerDetails,
+  validateLoanCreationDetails
 };
