@@ -40,6 +40,37 @@ const createCustomer = async (req, res) => {
   }
 };
 
+// To get all Customers related to Shopkeeper(loggedIn User)
+const getCustomers = async (req, res) => {
+  try {
+    const { shopKeeper } = req;
+    const shopkeeperId = shopKeeper._id;
+    const customers = await Customer.find({ userId: shopkeeperId });
+    return res.json({ data: customers });
+  } catch (err) {
+    return res.status(400).json({ message: err.message });
+  }
+};
+
+// To get Single Customer Info
+
+const getCustomer = async (req, res) => {
+  try {
+    const { customerId } = req.params;
+    const customer = await Customer.findById(customerId);
+    if (!customer) {
+      return res.status(400).json({ message: "Customer Not Found" });
+    }
+    // If customer exists and check whether it belongs to shopkeeper or not
+    if (customer.userId != req.shopKeeper._id) {
+      return res.status(400).json({ message: "Customer Not Found" });
+    }
+    return res.json({ data: customer });
+  } catch (err) {
+    return res.status(400).json({ message: err.message });
+  }
+};
+
 // Update Customer
 const updateCustomer = async (req, res) => {
   try {
@@ -92,4 +123,10 @@ const removeCustomer = async (req, res) => {
   }
 };
 
-module.exports = { createCustomer, updateCustomer, removeCustomer };
+module.exports = {
+  createCustomer,
+  updateCustomer,
+  removeCustomer,
+  getCustomers,
+  getCustomer,
+};
