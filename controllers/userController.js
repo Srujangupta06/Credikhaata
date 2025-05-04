@@ -1,3 +1,4 @@
+const { startCronOfOverdueLoans } = require("../config/cronJob");
 const User = require("../models/userModel");
 const {
   validateSignUpDetails,
@@ -7,7 +8,7 @@ const bcrypt = require("bcryptjs");
 // User Registration
 const userRegistration = async (req, res) => {
   try {
-    const { name, email, phone, password } = req.body;
+    const { name, email, password } = req.body;
     // Validate the incoming data
     validateSignUpDetails(req.body);
     // Check the User exists before or not
@@ -64,6 +65,7 @@ const userLogin = async (req, res) => {
   }
 };
 
+// Get shopKeeper profile info
 const getUserInfo = async (req, res) => {
   try {
     const { shopKeeper } = req;
@@ -79,4 +81,14 @@ const getUserInfo = async (req, res) => {
   }
 };
 
-module.exports = { userRegistration, userLogin, getUserInfo };
+// Logout User(Shopkeeper)
+const logout = async(req,res)=>{
+  try{
+    res.clearCookie("token");
+    return res.json({ message: "Logout Successfull" });
+  }
+  catch(err){
+    return res.status(400).json({ message: err.message });
+  }
+}
+module.exports = { userRegistration, userLogin, getUserInfo, logout };

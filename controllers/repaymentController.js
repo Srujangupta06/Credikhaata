@@ -2,6 +2,7 @@ const Loan = require("../models/loanModel");
 const Repayment = require("../models/repaymentModel");
 const { validateLoanRepaymentDetails } = require("../utils/validations");
 const { currencyType } = require("../utils/constants");
+const Customer = require("../models/customerModel");
 const moment = require("moment");
 const loanRepayment = async (req, res) => {
   try {
@@ -32,6 +33,13 @@ const loanRepayment = async (req, res) => {
     // Update the status of loan
     if (existingLoan.remainingAmount === 0) {
       existingLoan.status = "paid";
+      // Increase the credit limit of customer
+      const customer = await Customer.findById(existingLoan.customerId);
+      if (!customer) {
+        return res.status(404).json({ message: "Customer Not Found" });
+      }
+      customer.creditLimit += existingLoan.loanAmount;
+      await customer.save();
     }
     await existingLoan.save();
 
@@ -44,10 +52,18 @@ const loanRepayment = async (req, res) => {
       isPartiallyPaid: existingLoan.remainingAmount === 0 ? false : true,
     });
     // Save the record in DB
-    await repaymentRecord.save();
-    res
-      .status(201)
-      .json({ message: "Repayment Done Successfully", data: repaymentRecord });
+    const savedRepaymentRecord = await repaymentRecord.save();
+    const { __v, updatedAt, createdAt, ...filteredRepayment } =
+      savedRepaymentRecord.toObject();
+    res.status(201).json({
+      message: "Repayment Done Successfully",
+      data: {
+        createdAt: moment(createdAt).format("DD-MM-YYYY"),
+        ...filteredRepayment,
+        loanAmount: existingLoan.loanAmount,
+        remainingAmount: existingLoan.remainingAmount,
+      },
+    });
   } catch (err) {
     return res.status(400).json({ message: err.message });
   }
@@ -59,15 +75,18 @@ const getLoanRepayments = async (req, res) => {
   try {
     const { shopKeeper } = req;
     const shopkeeperId = shopKeeper._id;
-    const repayments = await Repayment.find({ shopKeeperId: shopkeeperId }).populate("loanId","loanAmount issueDate dueDate").select("_id loanId repaymentAmount repaymentDate isPartiallyPaid").lean();
+    const repayments = await Repayment.find({ shopKeeperId: shopkeeperId })
+      .populate("loanId", "loanAmount issueDate dueDate")
+      .select("_id loanId repaymentAmount repaymentDate isPartiallyPaid")
+      .lean();
     const formattedRepayments = repayments.map((eachRepayment) => ({
       ...eachRepayment,
       repaymentDate: moment(eachRepayment.repaymentDate).format("DD-MM-YYYY"),
-    }))
+    }));
     return res.json({ data: formattedRepayments });
   } catch (err) {
     return res.status(400).json({ message: err.message });
   }
 };
 
-module.exports = { loanRepayment,getLoanRepayments };
+module.exports = { loanRepayment, getLoanRepayments };

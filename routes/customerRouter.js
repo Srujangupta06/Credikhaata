@@ -11,7 +11,7 @@ const auth = require("../middlewares/auth");
 
 router.post("/create", auth, createCustomer);
 router.get("/list", auth, getCustomers);
-router.get("/list/:customerId", auth, getCustomer);
+router.get("/:customerId", auth, getCustomer);
 router.patch("/edit/:customerId", auth, updateCustomer);
 router.delete("/remove/:customerId", auth, removeCustomer);
 

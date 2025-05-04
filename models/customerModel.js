@@ -32,9 +32,9 @@ const customerSchema = new mongoose.Schema(
     },
     creditLimit: {
       type: Number,
-      default: 0,
       min: [0, "Credit Limit cannot be negative"],
       max: [10000, "Credit Limit cannot exceed 10000"],
+      default: 0,
     },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -44,6 +44,7 @@ const customerSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
 
 const Customer =
   mongoose.model("Customer", customerSchema) || mongoose.models.Customer;

@@ -9,7 +9,14 @@ const issue = moment();
 const createLoan = async (req, res) => {
   try {
     const { shopKeeper } = req;
-    const { customerId, frequency, itemDescription, loanAmount } = req.body;
+    const {
+      customerId,
+      frequency,
+      itemDescription,
+      loanAmount,
+      dueDate,
+      issueDate,
+    } = req.body;
     // Validate the incoming data
     validateLoanCreationDetails(req.body);
     // check whether customer exists or not
@@ -19,7 +26,6 @@ const createLoan = async (req, res) => {
     if (!existingCustomer) {
       return res.status(404).json({ message: "Customer Not Found" });
     }
-
     // Check whether the loan Amount is less than credit limit of customer
     if (loanAmount > existingCustomer.creditLimit) {
       return res.status(400).json({
@@ -33,8 +39,8 @@ const createLoan = async (req, res) => {
       issueDate: issue.toDate(),
       dueDate:
         frequency === "weekly"
-          ? issue.clone(1, "weeks").toDate()
-          : issue.clone(1, "months").toDate(),
+          ? issue.clone().add(1, "weeks").toDate()
+          : issue.clone().add(1, "months").toDate(),
       loanAmount,
       frequency,
     };
@@ -63,13 +69,19 @@ const getLoans = async (req, res) => {
     // Get All Customer Ids
     const customerIds = customers.map((customer) => customer._id);
     // Get Loans of Customers
+
     const loans = await Loan.find({ customerId: { $in: customerIds } })
       .find({ status: status || "pending" })
       .populate("customerId", "name email phone")
-      .select("loanAmount  issueDate dueDate frequency status");
+      .select("loanAmount issueDate dueDate frequency status")
+      .lean();
 
-    // const activeLoans = await Loan.find({ status: "pending" });
-    return res.json({ data: loans });
+    const formattedLoans = loans.map((eachLoan) => ({
+      ...eachLoan,
+      issueDate: moment(eachLoan.issueDate).format("DD-MM-YYYY"),
+      dueDate: moment(eachLoan.dueDate).format("DD-MM-YYYY"),
+    }));
+    return res.json({ data: formattedLoans });
   } catch (err) {
     return res.status(400).json({ message: err.message });
   }

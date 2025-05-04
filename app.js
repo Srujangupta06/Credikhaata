@@ -6,6 +6,7 @@ const userRouter = require("./routes/userRouter");
 const customerRouter = require("./routes/customerRouter");
 const loanRouter = require("./routes/loanRouter");
 const repaymentRouter = require("./routes/repaymentRouter");
+const { startCronOfOverdueLoans } = require("./config/cronJob");
 
 const app = express();
 
@@ -27,6 +28,8 @@ app.get("/", (req, res) => {
     "Welcome to Credikhaata, where you can manage your customers,loans,track repayments and much more."
   );
 });
+// Cron Jobs
+startCronOfOverdueLoans();
 
 // Initialize DB and Server
 const initializeDBAndServer = async () => {

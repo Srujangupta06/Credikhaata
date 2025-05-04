@@ -2,7 +2,6 @@ const Customer = require("../models/customerModel");
 const User = require("../models/userModel");
 const {
   validateCustomerDetails,
-  validateCustomerUpdateInfo,
 } = require("../utils/validations");
 
 // Create Customer
@@ -45,7 +44,7 @@ const getCustomers = async (req, res) => {
   try {
     const { shopKeeper } = req;
     const shopkeeperId = shopKeeper._id;
-    const customers = await Customer.find({ userId: shopkeeperId });
+    const customers = await Customer.find({ userId: shopkeeperId }).select("-userId -__v  -updatedAt");
     return res.json({ data: customers });
   } catch (err) {
     return res.status(400).json({ message: err.message });
@@ -53,19 +52,20 @@ const getCustomers = async (req, res) => {
 };
 
 // To get Single Customer Info
-
 const getCustomer = async (req, res) => {
   try {
     const { customerId } = req.params;
-    const customer = await Customer.findById(customerId);
+    const {shopKeeper} = req;
+    const customer = await Customer.findOne({_id:customerId}).select("-updatedAt -__v");
+
     if (!customer) {
       return res.status(404).json({ message: "Customer Not Found" });
     }
-    // If customer exists and check whether it belongs to shopkeeper or not
-    if (customer.userId != req.shopKeeper._id) {
-      return res.status(404).json({ message: "Customer Not Found" });
+     // If customer exists and check whether it belongs to shopkeeper or not
+    if (customer.userId.toString() !== shopKeeper._id.toString()) {
+      return res.status(404).json({ message: "Customer Not Found in your Shop" });
     }
-    return res.json({ data: customer });
+     return res.json({ data: customer });
   } catch (err) {
     return res.status(400).json({ message: err.message });
   }
