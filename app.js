@@ -5,6 +5,7 @@ const cookieParser = require("cookie-parser");
 const userRouter = require("./routes/userRouter");
 const customerRouter = require("./routes/customerRouter");
 const loanRouter = require("./routes/loanRouter");
+const repaymentRouter = require("./routes/repaymentRouter");
 
 const app = express();
 
@@ -18,12 +19,14 @@ app.use(cookieParser());
 app.use("/user", userRouter);
 app.use("/customer", customerRouter);
 app.use("/loan", loanRouter);
+app.use("/repayment", repaymentRouter);
 
 // Default Route
 app.get("/", (req, res) => {
-  res.send("Welcome to Credikhaata, where you can manage your customers,loans,track repayments and much more.");
+  res.send(
+    "Welcome to Credikhaata, where you can manage your customers,loans,track repayments and much more."
+  );
 });
-
 
 // Initialize DB and Server
 const initializeDBAndServer = async () => {

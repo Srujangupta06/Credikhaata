@@ -64,4 +64,19 @@ const userLogin = async (req, res) => {
   }
 };
 
-module.exports = { userRegistration, userLogin };
+const getUserInfo = async (req, res) => {
+  try {
+    const { shopKeeper } = req;
+
+    const shopKeeperInfo = {
+      _id: shopKeeper._id,
+      name: shopKeeper.name,
+      email: shopKeeper.email,
+    };
+    return res.json({ data: shopKeeperInfo });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+module.exports = { userRegistration, userLogin, getUserInfo };
