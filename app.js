@@ -1,5 +1,6 @@
 const express = require("express");
 require("dotenv").config();
+const cors = require("cors");
 const initializeDB = require("./config/database");
 const cookieParser = require("cookie-parser");
 const userRouter = require("./routes/userRouter");
@@ -13,6 +14,7 @@ const app = express();
 const PORT = 5000;
 
 // Middlewares
+app.use(cors())
 app.use(express.json());
 app.use(cookieParser());
 

@@ -47,3 +47,10 @@ dotenv            - to store secure keys
 
 
 
+# Deployment
+- Create a account in AWS
+- Created an AWS EC2 Instance
+- Configured Instance
+- Connected to Instance through ssh via .pem file
+- Installed Node into remote instance
+- cloned git repository
