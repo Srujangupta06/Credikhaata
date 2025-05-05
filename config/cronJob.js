@@ -3,7 +3,7 @@ const Loan = require("../models/loanModel");
 const moment = require("moment");
 const {
   sendWhatsappMessageForOverdueLoans,
-} = require("../servies/SendMesaage");
+} = require("../services/SendMesaage");
 const Customer = require("../models/customerModel");
 
 // I want to check the status of all loans every day at 8 AM IST
