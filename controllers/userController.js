@@ -21,7 +21,6 @@ const userRegistration = async (req, res) => {
     const newUser = new User({
       name,
       email,
-      phone,
       password: hashedPassword,
     });
     // Save the  User in DB
@@ -59,6 +58,7 @@ const userLogin = async (req, res) => {
     }); // 7days to expire
     res.json({
       message: "Login Successfull",
+      token,
     });
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -82,13 +82,12 @@ const getUserInfo = async (req, res) => {
 };
 
 // Logout User(Shopkeeper)
-const logout = async(req,res)=>{
-  try{
+const logout = async (req, res) => {
+  try {
     res.clearCookie("token");
     return res.json({ message: "Logout Successfull" });
-  }
-  catch(err){
+  } catch (err) {
     return res.status(400).json({ message: err.message });
   }
-}
+};
 module.exports = { userRegistration, userLogin, getUserInfo, logout };
