@@ -1,7 +1,9 @@
 const cron = require("node-cron");
 const Loan = require("../models/loanModel");
 const moment = require("moment");
-const { sendWhatsappMessageForOverdueLoans } = require("../services/SendMessage.js");
+const {
+  sendWhatsappMessageForOverdueLoans,
+} = require("../servies/SendMesaage");
 const Customer = require("../models/customerModel");
 
 // I want to check the status of all loans every day at 8 AM IST
