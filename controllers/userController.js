@@ -55,6 +55,9 @@ const userLogin = async (req, res) => {
     const token = user.generateJWT();
     res.cookie("token", token, {
       expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      sameSite: "Lax",
+      httpOnly: true,
+      secure: false,
     }); // 7days to expire
     res.json({
       message: "Login Successfull",
