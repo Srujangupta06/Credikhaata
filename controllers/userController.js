@@ -58,7 +58,11 @@ const userLogin = async (req, res) => {
     }); // 7days to expire
     res.json({
       message: "Login Successfull",
-      token,
+      data: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+      },
     });
   } catch (err) {
     res.status(400).json({ message: err.message });

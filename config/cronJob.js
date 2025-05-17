@@ -1,10 +1,10 @@
 const cron = require("node-cron");
 const Loan = require("../models/loanModel");
 const moment = require("moment");
-const {
-  sendWhatsappMessageForOverdueLoans,
-} = require("../utils/SendMesaage");
+const momentTimeZone = require("moment-timezone");
+const { sendWhatsappMessageForOverdueLoans } = require("../utils/SendMesaage");
 const Customer = require("../models/customerModel");
+console.log("CRON RUNNING at", momentTimeZone().tz("Asia/Kolkata").format());
 
 // I want to check the status of all loans every day at 8 AM IST
 const startCronOfOverdueLoans = () => {
@@ -12,14 +12,14 @@ const startCronOfOverdueLoans = () => {
     "0 8 * * *",
     async () => {
       try {
-        const todayEnd = moment().utc().endOf("day").toDate();
+        const todayEnd = momentTimeZone().tz("Asia/Kolkata").endOf("day").toDate();
 
         const overdueLoans = await Loan.find({
           dueDate: { $lt: todayEnd },
           status: { $ne: "paid" },
           remainingAmount: { $gt: 0 },
         });
-
+       
         for (const loan of overdueLoans) {
           loan.status = "overdue";
           await loan.save();
@@ -34,14 +34,15 @@ const startCronOfOverdueLoans = () => {
           }
           const shopKeeperName = customer?.userId?.name;
           const { name, phone } = customer;
-          const { loanAmount, remainingAmount } = loan;
+          const { loanAmount, remainingAmount, itemDescription } = loan;
 
           sendWhatsappMessageForOverdueLoans(
             shopKeeperName,
             name,
             phone,
             loanAmount,
-            remainingAmount
+            remainingAmount,
+            itemDescription
           );
         }
       } catch (err) {

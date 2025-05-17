@@ -9,7 +9,7 @@ const createCustomer = async (req, res) => {
   try {
     const { shopKeeper } = req;
     const shopkeeperId = shopKeeper._id;
-    const { name, phone, address, trustScore } = req.body;
+    let { name, phone, address, trustScore,creditLimit } = req.body;
     // Validate the incoming data
     validateCustomerDetails(req.body);
     //Check the User exist with user Id
@@ -18,22 +18,26 @@ const createCustomer = async (req, res) => {
       return res.status(400).json({ message: "Shopkeeper doesn't exist" });
     }
     // Check the Customer exists before or not
-    const isExistingCustomer = await Customer.findOne({ phone });
+    const isExistingCustomer = await Customer.findOne({ phone, userId: shopkeeperId });
     if (isExistingCustomer) {
       return res.status(409).json({ message: "Customer Already Exists With Same Phone Number" });
     }
     // Create a New Customer
 
+    if(!creditLimit){
+      creditLimit = 0;
+    }
     const newCustomer = new Customer({
       name,
       phone,
       address,
       trustScore,
+      creditLimit,
       userId: shopkeeperId,
     });
     // Save the Customer in DB
     await newCustomer.save();
-    return res.status(201).json({ message: "Customer Created Successfully" });
+    return res.status(201).json({ data: newCustomer, message: "Customer Created Successfully" });
   } catch (err) {
     return res.status(400).json({ message: err.message });
   }
@@ -115,7 +119,7 @@ const removeCustomer = async (req, res) => {
     }
     // If Exists remove the customer
     await Customer.findByIdAndDelete(customerId);
-    return res.status(204).json({
+    return res.status(200).json({
       message: `${existingCustomer.name} has been successfully removed`,
     });
   } catch (err) {

@@ -42,7 +42,15 @@ const validateLoginDetails = (userInfo) => {
 };
 
 const validateCustomerDetails = (customerInfo) => {
-  const { name, phone, address, trustScore } = customerInfo;
+  const { name, phone, address, trustScore, creditLimit } = customerInfo;
+  if(creditLimit){
+    if (typeof creditLimit !== "number" || creditLimit < 0) {
+      throw new Error("Invalid Credit Limit");
+    }
+    if (creditLimit < 0 || creditLimit > 10000) {
+      throw new Error("Invalid Credit Limit");
+    }
+  }
   if (!name || !phone || !address || !trustScore) {
     throw new Error("All fields are required");
   }
@@ -59,12 +67,15 @@ const validateCustomerDetails = (customerInfo) => {
 
 
 const validateLoanCreationDetails = (loanInfo) => {
-  const { loanAmount, customerId, itemDescription, frequency } = loanInfo;
-  if (!loanAmount || !itemDescription || !customerId || !frequency) {
+  const { loanAmount, phone, itemDescription, frequency } = loanInfo;
+  if (loanAmount===undefined || loanAmount===null || !itemDescription || !phone || !frequency) {
     throw new Error("All fields are required");
   }
-  if (typeof loanAmount !== "number") {
-    throw new Error("Loan Amount must be a number");
+  if(phone.length !== 10 || !validator.isMobilePhone(phone, "en-IN")) {
+    throw new Error("Invalid Phone Number");
+  }
+  if (typeof loanAmount !== "number" || loanAmount < 0) {
+    throw new Error("Invalid Loan Amount");
   }
   if (loanAmount < 100) {
     throw new Error("Loan Amount must be at least 100");

@@ -11,11 +11,14 @@ const loanRepayment = async (req, res) => {
     const shopkeeperId = shopKeeper._id;
     const { repaymentAmount, repaymentDate } = req.body;
 
-    const existingLoan = await Loan.findById(loanId);
+    const existingLoan = await Loan.findOne({
+      _id: loanId,
+      status: { $ne: "paid" },
+    });
     if (!existingLoan) {
-      return res
-        .status(404)
-        .json({ message: `No Loan with this ${loanId} Found` });
+      return res.status(404).json({
+        message: `Sorry, we couldn't find any loan with ID: ${loanId}.`,
+      });
     }
     // validate the Incoming Data
     validateLoanRepaymentDetails(req.body);
@@ -24,7 +27,7 @@ const loanRepayment = async (req, res) => {
     // Check repayment amount should be less than or equal to remaining amount
     if (repaymentAmount > existingLoan.remainingAmount) {
       return res.status(400).json({
-        message: `Repayment Amount: ${repaymentAmount} ${currencyType} should be less than or equal to ${existingLoan.remainingAmount} ${currencyType}`,
+        message: `Repayment Amount: ${repaymentAmount} ${currencyType} should be less than or equal to Loan Amount: ${existingLoan.remainingAmount} ${currencyType}`,
       });
     }
     existingLoan.remainingAmount =
@@ -33,6 +36,7 @@ const loanRepayment = async (req, res) => {
     // Update the status of loan
     if (existingLoan.remainingAmount === 0) {
       existingLoan.status = "paid";
+      
       // Increase the credit limit of customer
       const customer = await Customer.findById(existingLoan.customerId);
       if (!customer) {
@@ -40,6 +44,7 @@ const loanRepayment = async (req, res) => {
       }
       customer.creditLimit += existingLoan.loanAmount;
       await customer.save();
+      
     }
     await existingLoan.save();
 
@@ -64,6 +69,7 @@ const loanRepayment = async (req, res) => {
         remainingAmount: existingLoan.remainingAmount,
       },
     });
+    
   } catch (err) {
     return res.status(400).json({ message: err.message });
   }
@@ -76,14 +82,15 @@ const getLoanRepayments = async (req, res) => {
     const { shopKeeper } = req;
     const shopkeeperId = shopKeeper._id;
     const repayments = await Repayment.find({ shopKeeperId: shopkeeperId })
-      .populate("loanId", "loanAmount issueDate dueDate")
+      .populate("loanId", "loanAmount issueDate dueDate phone remainingAmount")
       .select("_id loanId repaymentAmount repaymentDate isPartiallyPaid")
       .lean();
     const formattedRepayments = repayments.map((eachRepayment) => ({
       ...eachRepayment,
       repaymentDate: moment(eachRepayment.repaymentDate).format("DD-MM-YYYY"),
     }));
-    return res.json({ data: formattedRepayments });
+    
+    res.status(200).json({ data: formattedRepayments });
   } catch (err) {
     return res.status(400).json({ message: err.message });
   }

@@ -1,11 +1,22 @@
 const mongoose = require("mongoose");
-
+const validator = require("validator")
 const loanSchema = new mongoose.Schema(
   {
     customerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Customer",
       required: true,
+    },
+    phone: {
+      type: String,
+      required: [true, "Phone Number is required"],
+      trim: true,
+      validate: {
+        validator: function (value) {
+          return value.length === 10 && validator.isMobilePhone(value, "en-IN");
+        },
+        message: "Invalid Phone Number",
+      },
     },
     itemDescription: {
       type: String,

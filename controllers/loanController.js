@@ -9,19 +9,13 @@ const issue = moment();
 const createLoan = async (req, res) => {
   try {
     const { shopKeeper } = req;
-    const {
-      customerId,
-      frequency,
-      itemDescription,
-      loanAmount,
-      dueDate,
-      issueDate,
-    } = req.body;
+    const { phone, frequency, itemDescription, loanAmount, dueDate } = req.body;
     // Validate the incoming data
     validateLoanCreationDetails(req.body);
+
     // check whether customer exists or not
     const existingCustomer = await Customer.findOne({
-      $and: [{ _id: customerId }, { userId: shopKeeper._id }],
+      $and: [{ phone: phone }, { userId: shopKeeper._id }],
     });
     if (!existingCustomer) {
       return res.status(404).json({ message: "Customer Not Found" });
@@ -34,54 +28,84 @@ const createLoan = async (req, res) => {
     }
     // Create a New Loan
     const loan = {
-      customerId,
+      customerId: existingCustomer._id,
+      phone,
       itemDescription,
       issueDate: issue.toDate(),
-      dueDate:
-        frequency === "weekly"
-          ? issue.clone().add(1, "weeks").toDate()
-          : issue.clone().add(1, "months").toDate(),
+      dueDate: dueDate
+        ? new Date(dueDate)
+        : frequency === "weekly"
+        ? issue.add(7, "days").toDate()
+        : issue.add(30, "days").toDate(),
+
       loanAmount,
       frequency,
     };
+
     const newLoan = new Loan(loan);
     // Save the Loan in DB
     await newLoan.save();
     existingCustomer.creditLimit -= loanAmount;
     await existingCustomer.save();
+    const loanObj = newLoan.toObject();
     return res.status(201).json({
       message: `Loan Created Successfully for ${existingCustomer.name}`,
+      data: {
+        ...loanObj,
+        remainingAmount: loanAmount,
+        issueDate: moment(loan.issueDate).format("DD-MM-YYYY"),
+        dueDate: moment(loan.dueDate).format("DD-MM-YYYY"),
+        status: "pending",
+      },
     });
   } catch (err) {
     return res.status(400).json({ message: err.message });
   }
 };
 
-// Get All Active loans (status:pending)
+// Get All  Loans created by Shopkeeper
 const getLoans = async (req, res) => {
   try {
-    // Status can be pending, paid, overdue
     const { status } = req.query;
     const { shopKeeper } = req;
     const shopkeeperId = shopKeeper._id;
-    // Customers of Shopkeeper
-    const customers = await Customer.find({ userId: shopkeeperId });
-    // Get All Customer Ids
-    const customerIds = customers.map((customer) => customer._id);
-    // Get Loans of Customers
 
-    const loans = await Loan.find({ customerId: { $in: customerIds } })
-      .find({ status: status || "pending" })
+    const customers = await Customer.find({ userId: shopkeeperId });
+    const customerIds = customers.map((customer) => customer._id);
+
+    // Build dynamic query
+    const loanQuery = {
+      customerId: { $in: customerIds },
+    };
+    if (status) {
+      loanQuery.status = status;
+    }
+
+    const loans = await Loan.find(loanQuery)
       .populate("customerId", "name email phone")
-      .select("loanAmount issueDate dueDate frequency status")
+      .sort({ createdAt: -1 })
       .lean();
 
     const formattedLoans = loans.map((eachLoan) => ({
-      ...eachLoan,
+      _id: eachLoan._id,
+      customerId: eachLoan.customerId._id,
+      phone: eachLoan.customerId.phone,
+      itemDescription: eachLoan.itemDescription,
+      loanAmount: eachLoan.loanAmount,
       issueDate: moment(eachLoan.issueDate).format("DD-MM-YYYY"),
       dueDate: moment(eachLoan.dueDate).format("DD-MM-YYYY"),
+      frequency: eachLoan.frequency,
+      status: eachLoan.status,
+      remainingAmount: eachLoan.remainingAmount,
+      createdAt: eachLoan.createdAt,
+      updatedAt: eachLoan.updatedAt,
+      __v: eachLoan.__v,
     }));
-    return res.json({ data: formattedLoans });
+
+    return res.status(200).json({
+      message: "Loans fetched successfully",
+      data: formattedLoans,
+    });
   } catch (err) {
     return res.status(400).json({ message: err.message });
   }
